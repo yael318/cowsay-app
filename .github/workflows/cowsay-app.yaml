@@ -1,33 +1,27 @@
-name: Cowsay CI
+name: 🐮 Cowsay CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Build Docker image
-        run: docker build -t cowsay-app:latest .
+        run: docker build -t yaelcohen/cowsay:latest .
 
   test:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
-
       - name: Run container
         run: |
-          docker build -t cowsay-app:latest .
-          docker run -d -p 8080:8080 --name cowsay cowsay-app:latest
+          docker run -d -p 8080:8080 --name cowsay yaelcohen/cowsay:latest
           sleep 5
           curl --fail http://localhost:8080 || exit 1
 
@@ -35,17 +29,12 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
-
       - name: Log in to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/cowsay-app:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/cowsay-app:latest
+      - name: Push Docker image
+        run: docker push yaelcohen/cowsay:latest
 
